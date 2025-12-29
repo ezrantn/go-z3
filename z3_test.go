@@ -229,3 +229,25 @@ func TestConcurrentContexts(t *testing.T) {
 		}(i)
 	}
 }
+
+func TestOptimization(t *testing.T) {
+	ctx := NewContext(NewConfig())
+	opt := ctx.NewOptimize()
+	x := ctx.Const("x", ctx.IntSort())
+
+	// x > 10 AND x < 100
+	opt.Assert(ctx.GT(x, ctx.Int(10, ctx.IntSort())))
+	opt.Assert(ctx.LT(x, ctx.Int(100, ctx.IntSort())))
+
+	// We want the smallest x possible
+	opt.Minimize(x)
+
+	if !opt.Check() {
+		t.Fatal("Optimizer failed to find a solution")
+	}
+
+	m := opt.GetModel()
+	if m.Eval(x) != "11" {
+		t.Errorf("Expected 11 (minimum), got %s", m.Eval(x))
+	}
+}
