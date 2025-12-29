@@ -60,15 +60,10 @@ func main() {
 }
 ```
 
-## Roadmap
-
-- [x] Basic Sorts (Int, Bool, Uninterpreted)
-- [x] Core Logic (And, Or, Not, Eq, Gt, Lt)
-- [x] Solver & Model Extraction
-- [ ] FuncDecl: Support for uninterpreted functions (Struct fields)
-- [ ] Quantifiers: Support for forall and exists
-- [ ] Arrays & Bitvectors: Full SMT-LIB type support
-
 ## Contributing
 
 Contributions are welcome!
+
+## License
+
+This tool is open-source and available under the [MIT License](https://github.com/ezrantn/go-z3/blob/main/LICENSE)

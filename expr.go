@@ -3,6 +3,7 @@ package z3
 /*
 #include <z3.h>
 #include <stdlib.h>
+#include <stdint.h>
 */
 import "C"
 import (
@@ -74,4 +75,47 @@ func (ctx *Context) Add(args ...*Expr) *Expr {
 		ptr = &cArgs[0]
 	}
 	return ctx.wrap(C.Z3_mk_add(ctx.c, C.uint(len(args)), ptr))
+}
+
+// Apply calls a function with the given arguments
+func (ctx *Context) Apply(f *FuncDecl, args ...*Expr) *Expr {
+	cArgs := make([]C.Z3_ast, len(args))
+	for i, arg := range args {
+		cArgs[i] = arg.ast
+	}
+
+	var ptr *C.Z3_ast
+	if len(cArgs) > 0 {
+		ptr = &cArgs[0]
+	}
+
+	return ctx.wrap(C.Z3_mk_app(ctx.c, f.d, C.uint(len(args)), ptr))
+}
+
+// BVVal creates a bit-vector numeral
+// Cast to C.int64_t which matches Z3's internal 64-bit expectation
+// If your compiler still complains about 'long', use C.long(val)
+func (ctx *Context) BVVal(val int64, bits uint) *Expr {
+	sort := ctx.BVSort(bits)
+	return ctx.wrap(C.Z3_mk_int64(ctx.c, C.int64_t(val), sort.s))
+}
+
+// BVAdd performs bit-vector addition (wraps on overflow)
+func (ctx *Context) BVAdd(l, r *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_bvadd(ctx.c, l.ast, r.ast))
+}
+
+// BVUgt is Unsigned Greater Than for bit-vectors
+func (ctx *Context) BVUgt(l, r *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_bvuge(ctx.c, l.ast, r.ast))
+}
+
+// Select reads a value from an array: array[index]
+func (ctx *Context) Select(array, index *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_select(ctx.c, array.ast, index.ast))
+}
+
+// Store updates an array: returns a NEW array where array[index] = value
+func (ctx *Context) Store(array, index, value *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_store(ctx.c, array.ast, index.ast, value.ast))
 }

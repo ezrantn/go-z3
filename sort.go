@@ -30,3 +30,13 @@ func (ctx *Context) CreateSort(name string) *Sort {
 	symbol := C.Z3_mk_string_symbol(ctx.c, cName)
 	return &Sort{c: ctx, s: C.Z3_mk_uninterpreted_sort(ctx.c, symbol)}
 }
+
+// BVSort returns a bit-vector sort of the given size (e.g., 32, 64)
+func (ctx *Context) BVSort(bits uint) *Sort {
+	return &Sort{c: ctx, s: C.Z3_mk_bv_sort(ctx.c, C.uint(bits))}
+}
+
+// ArraySort creates a sort for arrays from 'domain' to 'range'
+func (ctx *Context) ArraySort(domain, rangeSort *Sort) *Sort {
+	return &Sort{c: ctx, s: C.Z3_mk_array_sort(ctx.c, domain.s, rangeSort.s)}
+}
