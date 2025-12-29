@@ -90,11 +90,33 @@ func (ctx *Context) Add(args ...*Expr) *Expr {
 	for i, arg := range args {
 		cArgs[i] = arg.ast
 	}
+
 	var ptr *C.Z3_ast
 	if len(cArgs) > 0 {
 		ptr = &cArgs[0]
 	}
+
 	return ctx.wrap(C.Z3_mk_add(ctx.c, C.uint(len(args)), ptr))
+}
+
+// Mul performs multiplication: args[0] * args[1] * ...
+func (ctx *Context) Mul(args ...*Expr) *Expr {
+	cArgs := make([]C.Z3_ast, len(args))
+	for i, arg := range args {
+		cArgs[i] = arg.ast
+	}
+
+	var ptr *C.Z3_ast
+	if len(cArgs) > 0 {
+		ptr = &cArgs[0]
+	}
+
+	return ctx.wrap(C.Z3_mk_mul(ctx.c, C.uint(len(args)), ptr))
+}
+
+// Mod performs modulo: l % r
+func (ctx *Context) Mod(l, r *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_mod(ctx.c, l.ast, r.ast))
 }
 
 // Apply calls a function with the given arguments
@@ -183,4 +205,29 @@ func (ctx *Context) FPAGt(l, r *Expr) *Expr {
 // FPAToIEEEBV converts a Float expression to its bit-level Bitvector representation
 func (ctx *Context) FPAToIEEEBV(e *Expr) *Expr {
 	return ctx.wrap(C.Z3_mk_fpa_to_ieee_bv(ctx.c, e.ast))
+}
+
+// BVUge is Bit-Vector Unsigned Greater Than or Equal (l >= r)
+func (ctx *Context) BVUge(l, r *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_bvuge(ctx.c, l.ast, r.ast))
+}
+
+// BVUle is Bit-Vector Unsigned Less Than or Equal (l <= r)
+func (ctx *Context) BVUle(l, r *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_bvule(ctx.c, l.ast, r.ast))
+}
+
+// BVUlt is Bit-Vector Unsigned Less Than (l < r)
+func (ctx *Context) BVUlt(l, r *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_bvult(ctx.c, l.ast, r.ast))
+}
+
+// Xor performs logical Exclusive Or
+func (ctx *Context) Xor(l, r *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_xor(ctx.c, l.ast, r.ast))
+}
+
+// Implies performs logical implication: if l then r
+func (ctx *Context) Implies(l, r *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_implies(ctx.c, l.ast, r.ast))
 }

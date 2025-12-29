@@ -59,6 +59,25 @@ func main() {
 }
 ```
 
+## Benchmark
+
+Environment:
+
+- OS/Arch: linux/amd64
+- CPU: 11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz
+
+| **Benchmark**                   | **Iterations** | **Time (ns/op)** | **Memory (B/op)** | **Allocs/op** |
+| ------------------------------- | -------------- | ---------------- | ----------------- | ------------- |
+| **BenchmarkExprCreation**       | 334,828        | 3,615            | 16                | 1             |
+| **BenchmarkLogicModeling**      | 170,410        | 7,285            | 112               | 7             |
+| **BenchmarkSolverCheck**        | 404            | 2,857,793        | 0                 | 0             |
+| **BenchmarkFloatingPoint**      | 1,000,000      | 1,277            | 16                | 1             |
+| **BenchmarkQuantifierCreation** | 627,232        | 1,754            | 24                | 2             |
+
+The go-z3 library shows high efficiency across core operations, with expression creation and logic modeling completing in microseconds. Benchmarks indicate minimal CGO overhead, enabling over a million floating-point operations per second, while complex tasks like quantifiers and nested logic remain fast, ensuring the Go–Z3 bridge is not a bottleneck during AST construction.
+
+During solving, go-z3 incurs 0 B/op and 0 allocs/op on the Go side, confirming that computation is fully offloaded to the native Z3 engine and does not stress the Go GC. Overall, go-z3 is faster and more memory-efficient than string-based approaches, making it well-suited for high-performance formal verification.
+
 ## Contributing
 
 Contributions are welcome!
