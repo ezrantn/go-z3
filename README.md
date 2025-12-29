@@ -9,13 +9,12 @@ Unlike other wrappers, go-z3 provides a clean, Go-first API while utilizing CGO 
 
 ## Features
 
-- Idiomatic API: No more Lisp-style SMT-LIB strings. Use Go methods to build logic.
-
-- Automatic Memory Management: Uses runtime.SetFinalizer to handle Z3_inc_ref and Z3_dec_ref automatically.
-
-- Context Safety: Prevents mixing expressions between different Z3 contexts.
-
-- Model Extraction: Easily evaluate symbolic variables into Go types.
+- Logical Operations: Core support for Propositional Logic (And, Or, Not, Xor, Implies).
+- Bit-Vectors: Machine-precision arithmetic (8, 32, 64-bit) with support for bitwise operations and overflow modeling.
+- Floating Point: Full IEEE 754 support (Single and Double precision) with configurable Rounding Modes and handling of NaN and ±∞.
+- Functional Arrays: Model infinite mappings and memory states using functional Select and Store operations.
+- Function Declarations: Define uninterpreted functions to model object properties, struct fields, and custom relations.
+- Quantifiers: Support for First-Order Logic using Universal (∀) and Existential (∃) quantifiers for property verification.
 
 ## Installation
 
