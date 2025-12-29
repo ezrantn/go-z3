@@ -29,7 +29,7 @@ package main
 
 import (
     "fmt"
-    "github.com/ezrantn/go-z3/z3"
+    "github.com/ezrantn/go-z3"
 )
 
 func main() {
