@@ -64,6 +64,26 @@ func (ctx *Context) And(args ...*Expr) *Expr {
 	return ctx.wrap(C.Z3_mk_and(ctx.c, C.uint(len(args)), ptr))
 }
 
+// Not negates the given boolean expression: !e
+func (ctx *Context) Not(e *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_not(ctx.c, e.ast))
+}
+
+// Or performs logical OR: args[0] || args[1] || ...
+func (ctx *Context) Or(args ...*Expr) *Expr {
+	cArgs := make([]C.Z3_ast, len(args))
+	for i, arg := range args {
+		cArgs[i] = arg.ast
+	}
+
+	var ptr *C.Z3_ast
+	if len(cArgs) > 0 {
+		ptr = &cArgs[0]
+	}
+
+	return ctx.wrap(C.Z3_mk_or(ctx.c, C.uint(len(args)), ptr))
+}
+
 // Add performs addition: l + r
 func (ctx *Context) Add(args ...*Expr) *Expr {
 	cArgs := make([]C.Z3_ast, len(args))
@@ -118,4 +138,49 @@ func (ctx *Context) Select(array, index *Expr) *Expr {
 // Store updates an array: returns a NEW array where array[index] = value
 func (ctx *Context) Store(array, index, value *Expr) *Expr {
 	return ctx.wrap(C.Z3_mk_store(ctx.c, array.ast, index.ast, value.ast))
+}
+
+// FloatVal creates a floating point constant from a float64
+func (ctx *Context) FloatVal(val float64, sort *Sort) *Expr {
+	return ctx.wrap(C.Z3_mk_fpa_numeral_double(ctx.c, C.double(val), sort.s))
+}
+
+// FPAAdd performs: l + r using rounding mode rm
+func (ctx *Context) FPAAdd(rm, l, r *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_fpa_add(ctx.c, rm.ast, l.ast, r.ast))
+}
+
+// FPADiv performs: l / r using rounding mode rm
+func (ctx *Context) FPADiv(rm, l, r *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_fpa_div(ctx.c, rm.ast, l.ast, r.ast))
+}
+
+// FPAEq performs floating point equality (handles NaN correctly)
+func (ctx *Context) FPAEq(l, r *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_fpa_eq(ctx.c, l.ast, r.ast))
+}
+
+// FPALt performs: l < r
+func (ctx *Context) FPALt(l, r *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_fpa_lt(ctx.c, l.ast, r.ast))
+}
+
+// FPANeg returns the additive inverse: -e
+func (ctx *Context) FPANeg(e *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_fpa_neg(ctx.c, e.ast))
+}
+
+// FPAIsNaN returns true if the expression is NaN
+func (ctx *Context) FPAIsNaN(e *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_fpa_is_nan(ctx.c, e.ast))
+}
+
+// FPAGt is Floating Point Greater Than: l > r
+func (ctx *Context) FPAGt(l, r *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_fpa_gt(ctx.c, l.ast, r.ast))
+}
+
+// FPAToIEEEBV converts a Float expression to its bit-level Bitvector representation
+func (ctx *Context) FPAToIEEEBV(e *Expr) *Expr {
+	return ctx.wrap(C.Z3_mk_fpa_to_ieee_bv(ctx.c, e.ast))
 }

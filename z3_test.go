@@ -1,6 +1,7 @@
 package z3
 
 import (
+	"fmt"
 	"runtime"
 	"testing"
 )
@@ -116,4 +117,115 @@ func TestMemoryStress(t *testing.T) {
 	}
 
 	t.Log("Success: Processed 100k expressions without crashing")
+}
+
+func TestFloatAssociativity(t *testing.T) {
+	ctx := NewContext(NewConfig())
+	solver := ctx.NewSolver()
+	f32 := ctx.Float32Sort()
+	rm := ctx.RNE() // Round to nearest even
+
+	// Constants
+	a := ctx.Const("a", f32)
+	b := ctx.Const("b", f32)
+	c := ctx.Const("c", f32)
+
+	// lhs = (a + b) + c
+	lhs := ctx.FPAAdd(rm, ctx.FPAAdd(rm, a, b), c)
+	// rhs = a + (b + c)
+	rhs := ctx.FPAAdd(rm, a, ctx.FPAAdd(rm, b, c))
+
+	// Assert that they are NOT equal
+	solver.Assert(ctx.Not(ctx.FPAEq(lhs, rhs)))
+
+	if solver.Check() {
+		m := solver.GetModel()
+		t.Logf("Found case where (a+b)+c != a+(b+c):")
+		t.Logf("a: %s, b: %s, c: %s", m.Eval(a), m.Eval(b), m.Eval(c))
+	} else {
+		t.Fatal("Z3 says float addition is always associative (this is wrong!)")
+	}
+}
+
+func TestDeMorgan(t *testing.T) {
+	ctx := NewContext(NewConfig())
+	solver := ctx.NewSolver()
+
+	a := ctx.Const("a", ctx.BoolSort())
+	b := ctx.Const("b", ctx.BoolSort())
+
+	// lhs = !(a && b)
+	lhs := ctx.Not(ctx.And(a, b))
+	// rhs = !a || !b
+	rhs := ctx.Or(ctx.Not(a), ctx.Not(b))
+
+	// Theorem: lhs == rhs. To prove it, we assert !(lhs == rhs) and expect UNSAT.
+	solver.Assert(ctx.Not(ctx.Eq(lhs, rhs)))
+
+	if solver.Check() {
+		t.Fatal("De Morgan's law failed! Solver found a counter-example where !(a&&b) != !a||!b")
+	}
+	t.Log("Success: Boolean logic core is sound.")
+}
+
+func TestFloatToBitvector(t *testing.T) {
+	ctx := NewContext(NewConfig())
+	solver := ctx.NewSolver()
+
+	f32 := ctx.Float32Sort()
+	// Create a float: 1.0
+	val := ctx.FloatVal(1.0, f32)
+
+	// Cast float bits to BV32
+	// Note: You'll need ctx.FPAToIEEEBV()
+	bv := ctx.FPAToIEEEBV(val)
+
+	// In IEEE 754, 1.0 is represented as 0x3f800000
+	expected := ctx.BVVal(0x3f800000, 32)
+	solver.Assert(ctx.Eq(bv, expected))
+
+	if !solver.Check() {
+		t.Fatal("Float to Bitvector cast failed. 1.0 bits should be 0x3f800000")
+	}
+}
+
+func TestArrayOfStructs(t *testing.T) {
+	ctx := NewContext(NewConfig())
+	solver := ctx.NewSolver()
+
+	userSort := ctx.CreateSort("User")
+	ageField := ctx.CreateFuncDecl("Age", []*Sort{userSort}, ctx.IntSort())
+	userArray := ctx.ArraySort(ctx.IntSort(), userSort)
+
+	users := ctx.Const("users", userArray)
+	idx := ctx.Int(0, ctx.IntSort())
+
+	// Access: users[0].Age
+	userAtZero := ctx.Select(users, idx)
+	ageAtZero := ctx.Apply(ageField, userAtZero)
+
+	// Assert users[0].Age == 25
+	solver.Assert(ctx.Eq(ageAtZero, ctx.Int(25, ctx.IntSort())))
+
+	if !solver.Check() {
+		t.Fatal("Failed to solve nested Array and FuncDecl logic")
+	}
+
+	m := solver.GetModel()
+	t.Logf("Verified: users[0].Age = %s", m.Eval(ageAtZero))
+}
+
+func TestConcurrentContexts(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		go func(id int) {
+			cfg := NewConfig()
+			ctx := NewContext(cfg)
+			x := ctx.Const(fmt.Sprintf("x%d", id), ctx.IntSort())
+			solver := ctx.NewSolver()
+			solver.Assert(ctx.GT(x, ctx.Int(10, ctx.IntSort())))
+			if !solver.Check() {
+				t.Errorf("Concurrent solver %d failed", id)
+			}
+		}(i)
+	}
 }
